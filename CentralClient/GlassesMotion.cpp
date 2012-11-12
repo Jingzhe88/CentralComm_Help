@@ -32,7 +32,10 @@ int FrameCount = 0;
 int ControlCount =0;
 time_t startTime = 0;
 time_t curTime = 0;
-int diff = 0;
+float diff = 0;
+bool isTurnRight = false;
+bool isTurnLeft = false;
+
 struct svm_model *model = svm_load_model("GlassesMotion/train.txt.model");
 struct svm_model *NSModel = svm_load_model("GlassesMotion/Nod&Shake.model");
 struct svm_model *SModel = svm_load_model("GlassesMotion/shake.model");
@@ -48,7 +51,7 @@ void getPatternsWithInputImage(Mat preFrame, Mat curFrame, int& pattern);
 
 //new
 //turn left return 1, turn right return 2, nod return 3, no move return 0
-int LeftOrRightOrNod(){
+void LeftOrRightOrNod(){
 	vector<pair<int, int> > temp = CB.getLatestBuffer(3);
 	float cumulatedX = 0;
 	float cumulatedY = 0;
@@ -57,25 +60,70 @@ int LeftOrRightOrNod(){
 		cumulatedY += temp[i].second;
 	}
 
-	cout << "cumulatedY:" << cumulatedY << endl;
-	cout << "cumulatedX:" << cumulatedX << endl;
+	//cout << "cumulatedY:" << cumulatedY << endl;
+	//cout << "cumulatedX:" << cumulatedX << endl;
 	
 	if(cumulatedY > 2.5 && cumulatedX < 1.5 && cumulatedX > -1.5){
+		cout << "nod" <<endl;
 		CB.clear();
-		return 3;
+		G_glassesMode=targetApproach;		
+		RobotCommand(TargetApproach);
+		return;
 	}
 
-	if(cumulatedX > 3){
-		CB.clear();
-		return 2;
+	if(cumulatedX > 3 || isTurnRight){
+		cout << "turn right" << endl;
+		if(!isTurnRight)CB.clear();
+		isTurnRight = true;
+		temp = CB.getLatestBuffer(3);
+		for(int i = 0; i < 3; ++i){
+			cumulatedX += temp[i].first;
+			cumulatedY += temp[i].second;
+		}
+		if(cumulatedX < -3){
+			cout << "turn right end" << endl;
+			isTurnRight = false;
+			CB.clear();
+			startTime = curTime = time(NULL);
+			while(diff < 1){
+				curTime = time(NULL);
+				diff = curTime - startTime;
+			}
+			diff = 0;
+			return;
+		}else{
+			cout << "turn right go on" << endl;
+			RobotCommand(RobotTurnRight);
+		}
 	}
 
-	if(cumulatedX < -3){
-		CB.clear();
-		return 1;
+	if(cumulatedX < -3 || isTurnLeft){
+		cout << "turn left" << endl;
+		if(!isTurnLeft){
+			CB.clear();
+		}
+		isTurnLeft = true;
+		temp = CB.getLatestBuffer(3);
+		for(int i = 0; i < 3; ++i){
+			cumulatedX += temp[i].first;
+			cumulatedY += temp[i].second;
+		}
+		if(cumulatedX > 3){
+			isTurnLeft = false;
+			cout << "turn left end" << endl;
+			CB.clear();
+			startTime = curTime = time(NULL);
+			while(diff < 1){
+				curTime = time(NULL);
+				diff = curTime - startTime;
+			}
+			diff = 0;
+			return;
+		}else{
+			cout << "turn left go on" << endl;
+			RobotCommand(RobotTurnLeft);
+		}
 	}
-
-	return 0;
 }
 
 
@@ -105,7 +153,7 @@ void modeSwitch(Mat preFrame, Mat curFrame){
 			break;//in the mode "OR", pattern "turn around" switch mode "OR" into "idle"
 		case glassesControl:
 			
-			++ControlCount;
+			/*++ControlCount;
 			curTime = time(NULL);
 			diff = curTime - startTime;
 			if(ControlCount > 3 && diff > 1){
@@ -125,7 +173,8 @@ void modeSwitch(Mat preFrame, Mat curFrame){
 					G_glassesMode = idle;
 				}
 				
-			}
+			}*/
+			LeftOrRightOrNod();
 			break;//in the mode "control", pattern "turn around" switch mode "OR" into "idle"
 		  case robotSearch:
 				if(RS_glassesMode == shake){

@@ -53,7 +53,7 @@ extern ArVCC4* G_PTZHandler;
  
  void S_TargetApproach1( )
 {
-cout << "The last step: TargetApproach!" <<endl;
+	cout << "The last step: TargetApproach!" <<endl;
 
    //G_PathPlanning->setCollisionRange(1000);
 	//G_PathPlanning->setFrontClearance(40);
@@ -66,7 +66,7 @@ cout << "The last step: TargetApproach!" <<endl;
   double distance =0.0;
   
   double targetX, targetY;
-  int disThreshold = 400;
+  int disThreshold = 900;
    //test mode
 //     G_PTZHandler->panRel(-30);
 
@@ -91,7 +91,7 @@ cout << "The last step: TargetApproach!" <<endl;
 
   sick.lockDevice();
 	//if (distance == 0 || distance>disThreshold)
-  distance = sick.currentReadingPolar(/*robotHeading+*/ camAngle -2.5, /*robotHeading+*/ camAngle +2.5, &angle)-500;
+  distance = sick.currentReadingPolar(/*robotHeading+*/ camAngle -2.5, /*robotHeading+*/ camAngle +2.5, &angle)-disThreshold;
 //   double distance = sick.currentReadingPolar(89, 90, &angle);
   cout << "The closest reading is " << distance << " at " << angle << " degree , " << "disThreshold : " <<disThreshold << " " << robotHeading << " " << camAngle<< endl;
 
@@ -112,7 +112,7 @@ cout << "The last step: TargetApproach!" <<endl;
   
 
 	cout << "targetX : " <<targetX << " targetY" <<targetY;
-  G_PathPlanning->pathPlanToPose(ArPose(targetX,targetY,0),true,true);
+  G_PathPlanning->pathPlanToPose(ArPose(targetX,targetY,robot.getPose().getTh()),true,true);
   cout << "RobotMotion is processing..." <<endl;
 
   G_PTZHandler->reset();
@@ -122,7 +122,11 @@ cout << "The last step: TargetApproach!" <<endl;
   {
 		if (G_PathPlanning->getState() == ArPathPlanningTask::FAILED_MOVE)
 		{
-			G_PathPlanning->cancelPathPlan(); break;
+			G_PathPlanning->cancelPathPlan(); 
+			  double robotHeading = robot.getPose().getTh();
+			double robotCurrentX = robot.getPose().getX() ;
+			double robotCurrentY = robot.getPose().getY();
+			break;
 		}
 		else if(G_PathPlanning->getState() == ArPathPlanningTask::FAILED_PLAN)
 		{
@@ -157,6 +161,7 @@ cout << "The last step: TargetApproach!" <<endl;
  // //  {G_PathPlanning->pathPlanToPose(ArPose(-300,30,0),true,true);}
 
 	}
+  
 
 }
 
@@ -600,8 +605,9 @@ int main(int argc, char **argv)
   
   KeyPTU ptz(&robot); 		//create keyboard for control vcc50i
 	G_PTZHandler->reset();
-	ArUtil::sleep(200);
+	ArUtil::sleep(500);
 	G_PTZHandler->tiltRel(-10);
+	ArUtil::sleep(500);
 // robot.enableMotors();
 // robot.runAsync(true);
   //locTask.localizeRobotAtHomeBlocking();
@@ -611,8 +617,8 @@ int main(int argc, char **argv)
   videoserver.runAsync();
 
 
-	 //G_PathPlanning->pathPlanToPose(ArPose(0, 0 , -110),true,true);
-	 // while(G_PathPlanning->getState() != ArPathPlanningTask::REACHED_GOAL );
+	//G_PathPlanning->pathPlanToPose(ArPose(1671, 1065 , 32),true,true);
+	//while(G_PathPlanning->getState() != ArPathPlanningTask::REACHED_GOAL );
 
 	//ArUtil::sleep(5000);
 	////cout << "zoom in" <<endl;
@@ -620,7 +626,7 @@ int main(int argc, char **argv)
 	////ArUtil::sleep(3000);
  //   G_PTZHandler->panRel(60);
 	//	ArUtil::sleep(3000);
-
+	//while(1)
 	//S_TargetApproach1();
 
   robot.waitForRunExit();
