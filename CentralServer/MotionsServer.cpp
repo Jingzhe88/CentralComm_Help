@@ -1,7 +1,7 @@
 
 
 #include "MotionsServer.h"
-#define ANGAL_FOR_TURN 13
+#define ANGAL_FOR_TURN 15
 
 const double PI = 3.1415926;
 
@@ -24,49 +24,38 @@ void CoordinateCalculation(const double robotCurrentX, const double robotCurrent
 void coordinateCalculation(double robotCurrentX,double robotCurrentY,double *outputX,double *outputY,double camAngle, double robotHeading,double moveDistance);
 void basic_turn(int turnAngal)
 {
- // ArTime start;
- // G_PTZHandler->reset();
-	//ArUtil::sleep(500);
-	//G_PTZHandler->tiltRel(-10);
-	//CameraMoveCount=0;
-  //robot.lock();
+  ArTime start;
+  G_PTZHandler->reset();
+	ArUtil::sleep(200);
+	G_PTZHandler->tiltRel(-10);
+	CameraMoveCount=0;
+  robot.lock();
 
-	double robotHeading = robot.getPose().getTh();
-	robotHeading += turnAngal;
-  double robotCurrentX = robot.getPose().getX() ;
-  double robotCurrentY = robot.getPose().getY();
-
-	G_PathPlanning->pathPlanToPose(ArPose(robotCurrentX, robotCurrentY , robotHeading),true,true);
-	while(G_PathPlanning->getState() != ArPathPlanningTask::REACHED_GOAL );
-
-
-	//robot.setHeading(robot.getTh()+turnAngal);
- // robot.unlock();
+	robot.setHeading(robot.getTh()+turnAngal);
+  robot.unlock();
   
-  //start.setToNow();
-  //while (1)
-  //{
-	 // robot.lock();
-	 // if (robot.isHeadingDone())
-	 // {
-		//  printf(" Finished turn\n");
-		//  
-		//  ArUtil::sleep(50);
-		//  cout << " current heading: " << "    " << robot.getTh()<<endl;
-		//	robot.unlock();
-		//  break;
-	 // }
-	 // if (start.mSecSince() > 5000)
-	 // {
-		//  printf(" Turn timed out\n");
-		//  
-		//  cout << " current heading: " << "    " << robot.getTh()<<endl;
-		//	robot.unlock();
-		//  break;
-	 // }
-	 // robot.unlock();
-	 // ArUtil::sleep(10);
-  //}  
+  start.setToNow();
+  while (1)
+  {
+	  robot.lock();
+	  if (robot.isHeadingDone())
+	  {
+		  printf(" Finished turn\n");
+		  robot.unlock();
+		  ArUtil::sleep(50);
+		  cout << " current heading: " << "    " << robot.getTh()<<endl;
+		  break;
+	  }
+	  if (start.mSecSince() > 5000)
+	  {
+		  printf(" Turn timed out\n");
+		  robot.unlock();
+		  cout << " current heading: " << "    " << robot.getTh()<<endl;
+		  break;
+	  }
+	  robot.unlock();
+	  ArUtil::sleep(10);
+  }  
 }
 
 void S_GlassesCancel( ArServerClient *serverclient, ArNetPacket *socket)
@@ -87,7 +76,7 @@ void S_ZoomIn( ArServerClient *serverclient, ArNetPacket *socket)
 	//G_PTZHandler->zoom(G_PTZHandler->getZoom() + 1300);
 	//ArUtil::sleep(8000);
 	int cameraAdjustingAngle = socket->bufToDouble();
-	cout << "Adjust camera angle ... " << " " <<
+	cout << "Zoom in ... " << " " <<
 		cameraAdjustingAngle << endl;
 
 	G_PTZHandler-> panRel(cameraAdjustingAngle);
@@ -192,7 +181,7 @@ void S_RobotMotion( ArServerClient *serverclient, ArNetPacket *socket)
 
 void S_TargetApproach( ArServerClient *serverclient, ArNetPacket *socket)
 {
-	cout << "The last step: TargetApproach!" <<endl;
+cout << "The last step: TargetApproach!" <<endl;
 
    //G_PathPlanning->setCollisionRange(1000);
 	//G_PathPlanning->setFrontClearance(40);
@@ -205,11 +194,10 @@ void S_TargetApproach( ArServerClient *serverclient, ArNetPacket *socket)
   double distance =0.0;
   
   double targetX, targetY;
-  int disThreshold = 500;
+  int disThreshold = 400;
    //test mode
 //     G_PTZHandler->panRel(-30);
-	//G_PathPlanning->setFrontClearance(40);
-	//G_PathPlanning->setObsThreshold(1);
+
 
   cout << "--------------Path Planning Information--------------------" <<endl;
   cout << "SafeCollisionRange = " << G_PathPlanning->getSafeCollisionRange()  << endl;
@@ -230,10 +218,9 @@ void S_TargetApproach( ArServerClient *serverclient, ArNetPacket *socket)
 //Begin:  
 
   sick.lockDevice();
-
 	//if (distance == 0 || distance>disThreshold)
-  distance = sick.currentReadingPolar(/*robotHeading+*/ camAngle -2.5, /*robotHeading+*/ camAngle +2.5, &angle)-disThreshold;
-   //double distance = sick.currentReadingPolar(89, 90, &angle);
+  distance = sick.currentReadingPolar(/*robotHeading+*/ camAngle -2.5, /*robotHeading+*/ camAngle +2.5, &angle)-500;
+//   double distance = sick.currentReadingPolar(89, 90, &angle);
   cout << "The closest reading is " << distance << " at " << angle << " degree , " << "disThreshold : " <<disThreshold << " " << robotHeading << " " << camAngle<< endl;
 
   sick.unlockDevice();
@@ -263,7 +250,7 @@ void S_TargetApproach( ArServerClient *serverclient, ArNetPacket *socket)
   {
 		if (G_PathPlanning->getState() == ArPathPlanningTask::FAILED_MOVE)
 		{
-			G_PathPlanning->cancelPathPlan();cout <<  "x " << robot.getPose().getX()<< " y " <<robot.getPose().getY() <<endl; break;
+			G_PathPlanning->cancelPathPlan(); break;
 		}
 		else if(G_PathPlanning->getState() == ArPathPlanningTask::FAILED_PLAN)
 		{
@@ -298,6 +285,8 @@ void S_TargetApproach( ArServerClient *serverclient, ArNetPacket *socket)
  // //  {G_PathPlanning->pathPlanToPose(ArPose(-300,30,0),true,true);}
 
 	}
+  
+  
 }
 
 
