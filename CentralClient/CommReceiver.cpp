@@ -30,7 +30,7 @@ extern CircularBuffer CB;
 extern CComModule _Module;
 #include <atlcom.h>
 
-
+bool turnActionIsFinished = false;
 extern char* server_ip;
 extern ArMutex mutex_robotVideo;
 extern Mat robot_img;
@@ -51,7 +51,7 @@ int robotCameraAngle = 0;
 * Use this function to speak Object's name.
 *
 * @param index is the number of object that between 0 and 119 for Oct.14 version.
-* @return true if worked perfectly, otherwise false.
+* @return true if worked perfectlly, otherwise false.
 */
 int robotSpeakObjName(int index){
 	
@@ -86,7 +86,7 @@ int robotSpeakObjName(int index){
 * Use this function to speak Object's name.
 *
 * @param: index is the number of object that between 0 and 119 for Oct.14 version.
-* @return: if worked perfectly the function will return 1, otherwise 0.
+* @return: if worked perfectlly the function will return 1, otherwise 0.
 */
 
 int robotSpeak(const int index, const char *option)
@@ -168,14 +168,22 @@ void RobotCommand(int robotMoveComm )
 			cout << "CameraMotion has been sent out!" << endl;
 			break;
 		case 3:
+			if(!turnActionIsFinished)
+			{
 			client->requestOnce("RobotTurnLeft");
+			turnActionIsFinished = true;
 			elapseTime=0;
 			cout << "RobotTurnLeft has been sent out!" << endl;
+			}
 			break;
 		case 4:
+			if(!turnActionIsFinished)
+			{
 			client->requestOnce("RobotTurnRight");
+			turnActionIsFinished = true;
 			elapseTime=0;
 			cout << "RobotTurnRight has been sent out!" << endl;
+			}
 			break;
 		case 5:
 			robotSpeak(0,"tagetApproach");
@@ -216,11 +224,13 @@ void C_ZoomIn(ArNetPacket * pack)
 
 void C_RobotTurnLeft(ArNetPacket * pack)
 {
+	turnActionIsFinished = false;
 	cout << "Turn left is finished!" << endl; 
 }
 
 void C_RobotTurnRight(ArNetPacket * pack)
 {
+	turnActionIsFinished = false;
 	cout << "Turn right is finished!" << endl; 
 }
 
@@ -263,14 +273,13 @@ void* RobotSearch::runThread(void*)
 	ObjectRecognition robotOR("r20121111_4.yml.gz");
 	
 
-
+	//asking_for_help();
 	// Approach test-------------------------------------------------------
 
 	//RobotCommand(robotSearch);
 
 
 	//------------------------------------------------------------------------
-
 
 	while(1) 
   {
