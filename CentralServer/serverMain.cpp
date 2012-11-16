@@ -49,120 +49,86 @@ extern ArVCC4* G_PTZHandler;
 
 
 
-
+#define DISTANCE_VALVE 1000
+#define EXTRA_DISTANCE 400
  
- void S_TargetApproach1( )
+void S_TargetApproach_Obstacles()
 {
-	cout << "The last step: TargetApproach!" <<endl;
+	double camAngle = -1 * G_PTZHandler->getPan(); //negative #: right    positive #: left
+	double robotHeading = robot.getPose().getTh();
+	double robotCurrentX = robot.getPose().getX() ;
+	double robotCurrentY = robot.getPose().getY();
+	double angle = 0.0;
+	double distance =0.0;
 
-   //G_PathPlanning->setCollisionRange(1000);
-	//G_PathPlanning->setFrontClearance(40);
-	//G_PathPlanning->setGoalDistanceTolerance(2500);
-  double camAngle = -1 * G_PTZHandler->getPan();
-  double robotHeading = robot.getPose().getTh();
-  double robotCurrentX = robot.getPose().getX() ;
-  double robotCurrentY = robot.getPose().getY();
-  double angle = 0.0;
-  double distance =0.0;
-  
-  double targetX, targetY;
-  int disThreshold = 900;
-   //test mode
-//     G_PTZHandler->panRel(-30);
+	double targetX, targetY;
+
+	double scanAngle = 0;
+	double increasingUnit = 2.5;
 
 
-  cout << "--------------Path Planning Information--------------------" <<endl;
-  cout << "SafeCollisionRange = " << G_PathPlanning->getSafeCollisionRange()  << endl;
-	cout << "FrontClearance     = " << G_PathPlanning->getFrontClearance()      << endl
-		   << "GoalDistanceTolerance = " << G_PathPlanning->getGoalDistanceTolerance() << endl
-			 << "setGoalOccupiedFailDistance = " << G_PathPlanning->getGoalOccupiedFailDistance() << endl
-			 << "getObsThreshold = " << G_PathPlanning->getObsThreshold() <<endl
-			 << "getLocalPathFailDistance = " << G_PathPlanning->getLocalPathFailDistance() << endl;
-			 //getCurrentGoal
+	double minDistance = 0;
+	double maxDistance = 0;
 
+	double lowerBound = 0.0;
+	double upperBound = 0.0;
 
-  
-  
-//--------------- Set up the laser range device to read the distance from the target -----------------------------
- // for(int i =0; i< 20;i++)
-	//sick.currentReadingPolar(robotHeading+ camAngle -2.5, robotHeading+ camAngle +2.5, &angle);
-	
-//Begin:  
-
-  sick.lockDevice();
-	//if (distance == 0 || distance>disThreshold)
-  distance = sick.currentReadingPolar(/*robotHeading+*/ camAngle -2.5, /*robotHeading+*/ camAngle +2.5, &angle)-disThreshold;
-//   double distance = sick.currentReadingPolar(89, 90, &angle);
-  cout << "The closest reading is " << distance << " at " << angle << " degree , " << "disThreshold : " <<disThreshold << " " << robotHeading << " " << camAngle<< endl;
-
-  sick.unlockDevice();
+	while(maxDistance - minDistance < DISTANCE_VALVE)
+	{
 		
+		sick.lockDevice();
 
-  
-//----------------------------------------------------------------------------------------------------------------
-  
-  //basic_turn(camAngle);
-  
-  cout << "Camera Angle is " << camAngle << endl;
+		lowerBound = camAngle - 2.5 + scanAngle;
+		upperBound = camAngle + 2.5 + scanAngle;
 
-  cout << "before calculation, check originalX, originalY " << robotCurrentX << " " << robotCurrentY << " robotHeading is " << robotHeading << endl<<endl;  
-  coordinateCalculation(robotCurrentX,robotCurrentY,&targetX,&targetY,camAngle,robotHeading,distance);
-  //
-  //cout << "before movement, check targetX, target Y" << targetX << " " << targetY << "robotHeading is "<< robotHeading << endl << endl;
-  
+		minDistance = sick.currentReadingPolar(lowerBound, upperBound, &angle);
 
-	cout << "targetX : " <<targetX << " targetY" <<targetY;
-  G_PathPlanning->pathPlanToPose(ArPose(targetX,targetY,robot.getPose().getTh()),true,true);
-  cout << "RobotMotion is processing..." <<endl;
+		cout << "min: " << minDistance << " at " << angle << " degree , " << robotHeading << " " << camAngle<< endl;
 
-  G_PTZHandler->reset();
-	ArUtil::sleep(200);
+		sick.unlockDevice();
+
+		scanAngle += increasingUnit;
+
+		if(scanAngle >= 45 || scanAngle <= -45)
+		{
+			scanAngle = 0;
+			increasingUnit *= -1;
+			continue;
+		}
+
+		lowerBound = camAngle - 2.5 + scanAngle;
+		upperBound = camAngle + 2.5 + scanAngle;
+
+		maxDistance = sick.currentReadingPolar(lowerBound, upperBound, &angle);
+		cout << "max " << maxDistance << " at " << angle << " degree , " << robotHeading << " " << camAngle<< endl;
+	}
+
+	//camAngle = scanAngle;
+
+	distance = minDistance + EXTRA_DISTANCE;
+
+	coordinateCalculation(robotCurrentX,robotCurrentY,&targetX,&targetY,lowerBound,robotHeading+angle,distance);
+
+	G_PathPlanning->pathPlanToPose(ArPose(targetX, targetY , robotHeading),true,true);
+	G_PTZHandler->reset();
+
+	ArUtil::sleep(500);
+
 	G_PTZHandler->tiltRel(-10);
-  while(G_PathPlanning->getState() != ArPathPlanningTask::REACHED_GOAL )
-  {
+
+	while(G_PathPlanning->getState() != ArPathPlanningTask::REACHED_GOAL )
+	{
 		if (G_PathPlanning->getState() == ArPathPlanningTask::FAILED_MOVE)
 		{
-			G_PathPlanning->cancelPathPlan(); 
-			  double robotHeading = robot.getPose().getTh();
-			double robotCurrentX = robot.getPose().getX() ;
-			double robotCurrentY = robot.getPose().getY();
-			break;
+			G_PathPlanning->cancelPathPlan();cout <<  "x " << robot.getPose().getX()<< " y " <<robot.getPose().getY() <<endl; break;
 		}
 		else if(G_PathPlanning->getState() == ArPathPlanningTask::FAILED_PLAN)
 		{
-//			getchar();
-//getchar();
-//getchar();
-//			getchar();
-//			disThreshold+=50;
-//			
-//			goto Begin;
+
 		}
-  }
-
-  //serverclient->sendPacketTcp(socket);
-
-  ArUtil::sleep(3000);
-
-
-  cout << "RobotMotion is heading home..." <<endl;
-  G_PathPlanning->pathPlanToPose(ArPose(0,0,0),true,true);
-  
-  while(G_PathPlanning->getState() != ArPathPlanningTask::REACHED_GOAL )
-	{
-		//cout << G_PathPlanning->getState() <<endl;
-		if (G_PathPlanning->getState() == ArPathPlanningTask::FAILED_MOVE)
-		{
-			G_PathPlanning->cancelPathPlan(); break;
-		}
-
-
-	//	//else if(G_PathPlanning->getState() == ArPathPlanningTask::FAILED_PLAN)
- // //  {G_PathPlanning->pathPlanToPose(ArPose(-300,30,0),true,true);}
-
 	}
-  
 
+	/*serverclient->sendPacketTcp(socket);*/
 }
 
 
@@ -415,12 +381,13 @@ int main(int argc, char **argv)
   
 //   ArServerHandlerCommands commands(&server);
 
-  server.addData("turn","", new ArGlobalFunctor2<ArServerClient *, ArNetPacket*>(&turn_func) ,"","");
-  server.addData("RobotMotion"	   ,"", new ArGlobalFunctor2<ArServerClient *, ArNetPacket*>(&S_RobotMotion) ,"","");
-  server.addData("CameraMotion"   ,"", new ArGlobalFunctor2<ArServerClient *, ArNetPacket*>(&S_CameraMotion) ,"","");
-  server.addData("RobotTurnLeft"  ,"", new ArGlobalFunctor2<ArServerClient *, ArNetPacket*>(&S_RobotTurnLeft) ,"","");
-  server.addData("RobotTurnRight" ,"", new ArGlobalFunctor2<ArServerClient *, ArNetPacket*>(&S_RobotTurnRight) ,"","");
-  server.addData("TargetApproach" ,"", new ArGlobalFunctor2<ArServerClient *, ArNetPacket*>(&S_TargetApproach) ,"","");
+	server.addData("turn","", new ArGlobalFunctor2<ArServerClient *, ArNetPacket*>(&turn_func) ,"","");
+	server.addData("RobotMotion"	   ,"", new ArGlobalFunctor2<ArServerClient *, ArNetPacket*>(&S_RobotMotion) ,"","");
+	server.addData("CameraMotion"   ,"", new ArGlobalFunctor2<ArServerClient *, ArNetPacket*>(&S_CameraMotion) ,"","");
+	server.addData("RobotTurnLeft"  ,"", new ArGlobalFunctor2<ArServerClient *, ArNetPacket*>(&S_RobotTurnLeft) ,"","");
+	server.addData("RobotTurnRight" ,"", new ArGlobalFunctor2<ArServerClient *, ArNetPacket*>(&S_RobotTurnRight) ,"","");
+	server.addData("TargetApproach" ,"", new ArGlobalFunctor2<ArServerClient *, ArNetPacket*>(&S_TargetApproach) ,"","");
+	server.addData("TargetApproachObstacles" ,"", new ArGlobalFunctor2<ArServerClient *, ArNetPacket*>(&S_TargetApproach_Obstacles) ,"","");
 	server.addData("GlassesCancel" ,"", new ArGlobalFunctor2<ArServerClient *, ArNetPacket*>(&S_GlassesCancel) ,"","");
 	server.addData("ZoomIn" ,"", new ArGlobalFunctor2<ArServerClient *, ArNetPacket*>(&S_ZoomIn) ,"","");
 
@@ -616,9 +583,10 @@ int main(int argc, char **argv)
   VideoServerBase videoserver;
   videoserver.runAsync();
 
-
-	//G_PathPlanning->pathPlanToPose(ArPose(1671, 1065 , 32),true,true);
+	
+	//G_PathPlanning->pathPlanToPose(ArPose(0, 0 , 32),true,true);
 	//while(G_PathPlanning->getState() != ArPathPlanningTask::REACHED_GOAL );
+	//S_TargetApproach_Obstacles();
 
 	//ArUtil::sleep(5000);
 	////cout << "zoom in" <<endl;
@@ -628,7 +596,7 @@ int main(int argc, char **argv)
 	//	ArUtil::sleep(3000);
 	//while(1)
 	//S_TargetApproach1();
-
+	//cout << "done!!!!!!!---------------------" <<endl;
   robot.waitForRunExit();
   Aria::exit(0);
 }

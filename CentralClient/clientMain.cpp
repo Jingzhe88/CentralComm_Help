@@ -76,6 +76,7 @@ int main(int argc, char **argv)
 	client->addHandler("RobotTurnRight", new ArGlobalFunctor1<ArNetPacket*>(&C_RobotTurnRight));
 	client->addHandler("TargetApproach", new ArGlobalFunctor1<ArNetPacket*>(&C_TargetApproach));
 	client->addHandler("ZoomIn", new ArGlobalFunctor1<ArNetPacket*>(&C_ZoomIn));
+	//client->addHandler("TargetApproachObstacles", new ArGlobalFunctor1<ArNetPacket*>(&S_TargetApproach_Obstacles));
 	client->runAsync();
 
 	//for (int i=0;i<5;i++)

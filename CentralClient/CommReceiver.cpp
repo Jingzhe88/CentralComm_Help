@@ -187,12 +187,12 @@ void RobotCommand(int robotMoveComm )
 			break;
 		case 5:
 			robotSpeak(0,"tagetApproach");
-			client->requestOnce("TargetApproach");
+			client->requestOnce("TargetApproachObstacles");
+			//client->requestOnce("TargetApproach");
 			cout << "TargetApproach has been sent out!" << endl;
 			break;
 
 		case 6: 
-			//cout << "You are calling the Legacy function!" <<endl;
 			
 			pack.doubleToBuf(robotCameraAngle);
 			client->requestOnce("ZoomIn", &pack);
@@ -204,6 +204,11 @@ void RobotCommand(int robotMoveComm )
 			client->requestOnce("GlassesCancel");
 			G_glassesMode = idle;
 			cout << "Cancel has been sent out!" << endl;
+			break;
+		case 8:
+			robotSpeak(0,"tagetApproach");
+			client->requestOnce("TargetApproachObstacles");
+			cout << "TargetApproach has been sent out!" << endl;
 			break;
 		case 255: //for testing
 			cout << "You are calling the Legacy function!" <<endl;

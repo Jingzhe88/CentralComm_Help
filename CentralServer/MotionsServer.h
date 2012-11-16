@@ -17,6 +17,7 @@ void S_RobotMotion( ArServerClient *serverclient, ArNetPacket *socket);
 void S_CameraMotion( ArServerClient *serverclient, ArNetPacket *socket);
 void S_RobotTurnLeft( ArServerClient *serverclient, ArNetPacket *socket);
 void S_RobotTurnRight( ArServerClient *serverclient, ArNetPacket *socket);
+void S_TargetApproach_Obstacles( ArServerClient *serverclient, ArNetPacket *socket);
 void S_TargetApproach( ArServerClient *serverclient, ArNetPacket *socket);
 void S_GlassesCancel( ArServerClient *serverclient, ArNetPacket *socket);
 void S_ZoomIn( ArServerClient *serverclient, ArNetPacket *socket);
