@@ -20,7 +20,8 @@ void S_RobotTurnRight( ArServerClient *serverclient, ArNetPacket *socket);
 void S_TargetApproach_Obstacles( ArServerClient *serverclient, ArNetPacket *socket);
 void S_TargetApproach( ArServerClient *serverclient, ArNetPacket *socket);
 void S_GlassesCancel( ArServerClient *serverclient, ArNetPacket *socket);
-void S_ZoomIn( ArServerClient *serverclient, ArNetPacket *socket);
+void S_Calibration( ArServerClient *serverclient, ArNetPacket *socket);
+double getAngle(double targetX, double targetY, double originalX, double originalY);
 void CoordinateCalculation(const double robotCurrentX,const double robotCurrentY,double *outputX,double *outputY,const double camAngle, const double robotHeading,const double movDistance);
 void coordinateCalculation(const double robotCurrentX,const double robotCurrentY,double *outputX,double *outputY,const double camAngle, const double robotHeading,const double movDistance);
 #endif

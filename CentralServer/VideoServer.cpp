@@ -5,7 +5,7 @@ ArMutex mutex_video;
 Mat cap_img;
 Mat gray_img;
 int is_data_ready = 0;
-
+extern ArVCC4* G_PTZHandler;
 
 ArSocket clientSock, serverSock;;
 
@@ -98,8 +98,13 @@ void clientCloseCallback(ArServerClient * serverClient)
 {
 	clientSock.close();
 	serverSock.close();
+	G_PTZHandler->reset();
+	ArUtil::sleep(200);
+	G_PTZHandler->tiltRel(-10);
 	ss.runAsync();
+
 	cout << "client is closed, callback is done!" <<endl;
+
 }
 
 

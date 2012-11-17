@@ -43,6 +43,7 @@ extern GLASSESMODE G_glassesMode;//1 idle, 2 OR, 3 control, 4 Cancel
 RSGLASSESMODE RS_glassesMode;//1 Nod, 2 Shake
 extern ArMutex GlassesModeMutex;
 extern bool isDoneRobot;
+extern RobotSearch *G_robotsearch;
 int MSE(cv::Mat& curImage, cv::Mat& prevImage, int nPosX, int nPosY);
 void MotionEst(cv::Mat& curImage, cv::Mat& prevImage, int range, int& moveX, int& moveY);
 void gridSamplingImageMat(cv::Mat& org_imageMat, cv::Mat& to_imageMat, const int spacing, const int binSizeInShift);
@@ -66,8 +67,16 @@ void LeftOrRightOrNod(){
 	if(cumulatedY > 2.5 && cumulatedX < 1.5 && cumulatedX > -1.5){
 		cout << "nod" <<endl;
 		CB.clear();
-		G_glassesMode=targetApproach;		
-		RobotCommand(TargetApproach);
+		GlassesModeMutex.lock();
+		G_glassesMode = TARGET_APPROACH;	
+		GlassesModeMutex.unlock();
+		if(G_robotsearch->OR())
+			RobotCommand(Calibrate);
+		else
+		{
+			RobotCommand(CTargetApproachObstacles);
+			G_robotsearch->resetRobotCameraParam();
+		}
 		return;
 	}
 
@@ -135,23 +144,23 @@ void modeSwitch(Mat preFrame, Mat curFrame){
 
 		switch(G_glassesMode)
 		{
-		case idle:
+		case IDLE:
 			if(pattern == 1) {
 				robotSpeak(255, "OR_Entry");
-				G_glassesMode = glassesOR;
+				G_glassesMode = GLASSES_OR;
 				cout << "OR" << endl;
 
 			}
 			break;//in the mode "idle", pattern "turn around" activate mode "OR"
-		case glassesOR:
+		case GLASSES_OR:
 			if(pattern == 1)	{
 				robotSpeak(255, "idle");
-				G_glassesMode = idle;
+				G_glassesMode = IDLE;
 				cout << "idle" << endl;
 
 			}
 			break;//in the mode "OR", pattern "turn around" switch mode "OR" into "idle"
-		case glassesControl:
+		case GLASSES_CONTROL:
 			
 			/*++ControlCount;
 			curTime = time(NULL);
@@ -162,7 +171,7 @@ void modeSwitch(Mat preFrame, Mat curFrame){
 				case 0: cout << "no move" << endl;;break;
 				case 1: cout << "turn left" << endl;	startTime = time(NULL);	RobotCommand(RobotTurnLeft);		break;
 				case 2: cout << "turn right" << endl;	startTime = time(NULL);	RobotCommand(RobotTurnRight);		break;
-				case 3: cout << "nod" << endl;	startTime = time(NULL);		G_glassesMode=targetApproach;		RobotCommand(TargetApproach);break;
+				case 3: cout << "nod" << endl;	startTime = time(NULL);		G_glassesMode=TARGET_APPROACH;		RobotCommand(TargetApproach);break;
 
 				}
 				
@@ -176,7 +185,7 @@ void modeSwitch(Mat preFrame, Mat curFrame){
 			}*/
 			LeftOrRightOrNod();
 			break;//in the mode "control", pattern "turn around" switch mode "OR" into "idle"
-		  case robotSearch:
+		  case ROBOT_SEARCH:
 				if(RS_glassesMode == shake){
 					CB.clear();
 					RobotCommand(Cancel);
@@ -185,7 +194,7 @@ void modeSwitch(Mat preFrame, Mat curFrame){
 					
 				}
 				break;
-			case targetApproach:
+			case TARGET_APPROACH:
 				if(RS_glassesMode == shake){
 					CB.clear();
 					RobotCommand(Cancel);
@@ -235,7 +244,7 @@ void getPatternsWithInputImage(Mat preFrame, Mat curFrame, int& pattern){
 				sample[i].value = _56vector[i];
 			}
 
-			if(G_glassesMode == robotSearch || G_glassesMode == targetApproach){
+			if(G_glassesMode == ROBOT_SEARCH || G_glassesMode == TARGET_APPROACH){
 				if(svm_predict(NSModel, sample) == 1){
 					RS_glassesMode = nod;
 				}else if(svm_predict(NSModel, sample) == 2){

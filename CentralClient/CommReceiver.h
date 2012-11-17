@@ -23,7 +23,7 @@
 
 using namespace std;
 using namespace cv;
-enum { RobotMotion=1, CameraMotion, RobotTurnLeft, RobotTurnRight, TargetApproach, ZoomIn, Cancel };
+enum { RobotMotion=1, CameraMotion, RobotTurnLeft, RobotTurnRight, CTargetApproach, Calibrate, Cancel, CTargetApproachObstacles };
 
 void RobotCommand(int robotMoveComm);
 // void RobotMotion(ArClientBase client);
@@ -33,15 +33,25 @@ void C_CameraMotion(ArNetPacket * pack);
 void C_TargetApproach(ArNetPacket * pack);
 void C_RobotTurnLeft(ArNetPacket * pack);
 void C_RobotTurnRight(ArNetPacket * pack);
-void C_ZoomIn(ArNetPacket * pack);
+void C_Calibration(ArNetPacket * pack);
+void C_TargetApproach_Obstacles(ArNetPacket * pack);
+
+
+void targetApproach();
 int robotSpeakObjName(int index);
 int robotSpeak(const int index, const char *option);
 
 
 class RobotSearch : public ArASyncTask
 {
-	public:
-  void* runThread(void*) ;
+public:
+	RobotSearch();
+	bool OR();
+  void* runThread(void*);
+	void resetRobotCameraParam();
+private:
+	void moveRobotCamera();
+	ObjectRecognition robotOR;
 };
 
 #endif

@@ -51,7 +51,7 @@ int robotCameraAngle = 0;
 * Use this function to speak Object's name.
 *
 * @param index is the number of object that between 0 and 119 for Oct.14 version.
-* @return true if worked perfectlly, otherwise false.
+* @return true if worked perfectly, otherwise false.
 */
 int robotSpeakObjName(int index){
 	
@@ -86,7 +86,7 @@ int robotSpeakObjName(int index){
 * Use this function to speak Object's name.
 *
 * @param: index is the number of object that between 0 and 119 for Oct.14 version.
-* @return: if worked perfectlly the function will return 1, otherwise 0.
+* @return: if worked perfectly the function will return 1, otherwise 0.
 */
 
 int robotSpeak(const int index, const char *option)
@@ -123,9 +123,9 @@ int robotSpeak(const int index, const char *option)
 			if(!strcmp(option,  "OR_Entry"))
 				hr = pVoice->Speak(L"Object Recognition mode", 0, NULL);
 			if(!strcmp(option,  "complete"))
-				hr = pVoice->Speak(L"Mission is completed go back home", 0, NULL);
+				hr = pVoice->Speak(L"Mission has been completed", 0, NULL);
 			if(!strcmp(option,  "tagetApproach"))
-				hr = pVoice->Speak(L"heading to taget", 0, NULL);
+				hr = pVoice->Speak(L"heading to target", 0, NULL);
       pVoice->Release();
       pVoice = NULL;
     }
@@ -142,9 +142,8 @@ void asking_for_help()
 	
 	cout << "the robot needs help!" << endl;
 	CB.clear();
-	G_glassesMode=glassesControl;
+	G_glassesMode = GLASSES_CONTROL;
   ISpVoice * pVoice = NULL;
-
 }
 
 
@@ -172,7 +171,7 @@ void RobotCommand(int robotMoveComm )
 			{
 			client->requestOnce("RobotTurnLeft");
 			turnActionIsFinished = true;
-			elapseTime=0;
+			//elapseTime=0;
 			cout << "RobotTurnLeft has been sent out!" << endl;
 			}
 			break;
@@ -181,34 +180,33 @@ void RobotCommand(int robotMoveComm )
 			{
 			client->requestOnce("RobotTurnRight");
 			turnActionIsFinished = true;
-			elapseTime=0;
+			//elapseTime=0;
 			cout << "RobotTurnRight has been sent out!" << endl;
 			}
 			break;
-		case 5:
+		case 5: //CTargetApproach
 			robotSpeak(0,"tagetApproach");
-			client->requestOnce("TargetApproachObstacles");
+			client->requestOnce("TargetApproach");
 			//client->requestOnce("TargetApproach");
 			cout << "TargetApproach has been sent out!" << endl;
 			break;
 
 		case 6: 
-			
 			pack.doubleToBuf(robotCameraAngle);
-			client->requestOnce("ZoomIn", &pack);
-			cout << "ZoomIn is sent out!" << endl; 
+			client->requestOnce("Calibration", &pack);
+			cout << "Calibration is sent out!" << endl; 
 			break;
 		case 7:
-			isDoneRobot = true;
 			robotSpeak(255, "cancel");
 			client->requestOnce("GlassesCancel");
-			G_glassesMode = idle;
+			isDoneRobot = true;
+			G_glassesMode = IDLE;
 			cout << "Cancel has been sent out!" << endl;
 			break;
-		case 8:
+		case 8: //CTargetApproachObstacles
 			robotSpeak(0,"tagetApproach");
 			client->requestOnce("TargetApproachObstacles");
-			cout << "TargetApproach has been sent out!" << endl;
+			cout << "TargetApproachObstacles has been sent out!" << endl;
 			break;
 		case 255: //for testing
 			cout << "You are calling the Legacy function!" <<endl;
@@ -219,13 +217,16 @@ void RobotCommand(int robotMoveComm )
 	}
 }
 
-void C_ZoomIn(ArNetPacket * pack)
-{
-	cout << "Zoom in is finished!" << endl; 
-						
-					RobotCommand(TargetApproach);
-}
 
+/************************************************************************/
+/*                    Callback Function Group							              */
+/************************************************************************/      
+void C_Calibration(ArNetPacket * pack)
+{
+	cout << "Calibration is finished!" << endl; 
+						
+	RobotCommand(CTargetApproach);
+}
 
 void C_RobotTurnLeft(ArNetPacket * pack)
 {
@@ -239,18 +240,6 @@ void C_RobotTurnRight(ArNetPacket * pack)
 	cout << "Turn right is finished!" << endl; 
 }
 
-
-void C_TargetApproach(ArNetPacket * pack)
-{
-	cout << "Final step completed: Arrive the object!!!" << endl; 
-	robotSpeak(0,"complete");
-	GlassesModeMutex.lock();
-	G_glassesMode = idle;
-	robotSpeak(0,"idle");
-	GlassesModeMutex.unlock();
-}
-
-
 void C_RobotMotion(ArNetPacket * pack)
 {
 	
@@ -261,92 +250,125 @@ void C_RobotMotion(ArNetPacket * pack)
 	//RobotCommand(2); //CameraMotion
 }
 
-
 void C_CameraMotion(ArNetPacket * pack)
 {
 	cout << "Camera motion is back!" <<endl;
 	G_Search_Step++;
 	isDoneRobot = true;
-	
-	
 }
 
-void* RobotSearch::runThread(void*)
+void C_TargetApproach(ArNetPacket * pack)  //finish target approach
+{
+	cout << "Final step completed: Arrive the object!!!" << endl; 
+	robotSpeak(0,"complete");
+	GlassesModeMutex.lock();
+	G_glassesMode = IDLE;
+	robotSpeak(0,"idle");
+	G_Search_Step = 0;
+	isDoneRobot = true;
+	GlassesModeMutex.unlock();
+}
+
+
+void C_TargetApproach_Obstacles(ArNetPacket * pack)  //finish target approach avoid middle obstacle
+{
+	cout<< "C_TargetApproach_Obstacles is back" <<endl;
+	GlassesModeMutex.lock();
+	G_glassesMode = ROBOT_SEARCH;
+	GlassesModeMutex.unlock();
+	G_Search_Step = 0;
+	isDoneRobot = true;
+}
+//---------------------------------------------------------------------------------------------
+
+
+
+
+RobotSearch::RobotSearch():robotOR("r20121111_4.yml.gz")
+{
+
+}
+
+void RobotSearch::moveRobotCamera()
+{
+	if(G_Search_Step<=13)
+	{
+		//the object is detected, enter the search mode. callback: S_RobotMotion
+		RobotCommand(CameraMotion); //cameraMotion
+		isDoneRobot = false;
+	}
+	if(G_Search_Step>13)
+	{
+		asking_for_help();
+		G_Search_Step = 0;
+		//isDoneRobot = false;
+	}
+}
+
+void RobotSearch::resetRobotCameraParam()
+{
+	G_Search_Step=0;
+	isDoneRobot = true;
+}
+
+bool RobotSearch::OR()
 {
 	int robot_object[3]={255,255,255};
 	Mat robot_img_backup;
-	ObjectRecognition robotOR("r20121111_4.yml.gz");
-	
+	for(int i=0;i<3;i++)
+	{
+		mutex_robotVideo.lock();
+		robot_img.copyTo(robot_img_backup);
+		mutex_robotVideo.unlock();
+		robot_object[i]=255;
+		cout << "-- robot OR -- " <<endl;
+		robotCameraAngle=0;
+		robot_object[i] = robotOR.find(robot_img_backup, 'R', robotCameraAngle);
+		if (robot_object[i]!=255)
+		{
+			robot_object[i] /= 5;
+		}
+	}
+	if ((robot_object[0] == G_Target || robot_object[1] == G_Target || robot_object[2] == G_Target) 
+		&& G_Target!=255 /*&& G_glassesMode == ROBOT_SEARCH*/) //object is detected
+		return true;
+	else 
+		return false;
+}
 
-	//asking_for_help();
-	// Approach test-------------------------------------------------------
 
-	//RobotCommand(robotSearch);
-
-
-	//------------------------------------------------------------------------
-
+void* RobotSearch::runThread(void*)
+{
 	while(1) 
   {
-		if(G_glassesMode == robotSearch)
+		if(G_glassesMode == ROBOT_SEARCH)
 		{
-						for(int i=0;i<3;i++)
-						{
-							mutex_robotVideo.lock();
-							robot_img.copyTo(robot_img_backup);
-							mutex_robotVideo.unlock();
-							robot_object[i]=255;
-							cout << "robot OR -- " <<endl;
-							robotCameraAngle=0;
-							robot_object[i] = robotOR.find(robot_img_backup, 'R', robotCameraAngle);
-							if (robot_object[i]!=255)
-							{
-								robot_object[i] /= 5;
-							}
-						}
-
-			if ((robot_object[0] == G_Target || robot_object[1] == G_Target || robot_object[2] == G_Target) && G_Target!=255 && G_glassesMode == robotSearch) //object is detected
+			if(OR())
 			{
-				G_glassesMode = targetApproach;
-				RobotCommand(ZoomIn);
-							
+				G_glassesMode = TARGET_APPROACH;
+				RobotCommand(Calibrate);
 			}
-			else 
+			else if(isDoneRobot)
 			{
-				if(isDoneRobot && (G_glassesMode == robotSearch))
-				{
-					if(G_Search_Step<13)
-					{
-
-						//the object is detected, enter the serach mode. callback: S_RobotMotion
-						RobotCommand(CameraMotion); //cameraMotion
-						
-						isDoneRobot = false;
-					}
-					if(G_Search_Step>=13)
-					{
-					asking_for_help();
-						//RobotCommand(RobotMotion);
-						cout << "RobotMotion  " <<endl;
-						G_Search_Step = 0;
-						//isDoneRobot = false;
-					}
-
-				}//end of isDoneRobot
+				moveRobotCamera();
 			}
 
-			HelpEndTime = time(NULL);
-			elapseTime = HelpEndTime - HelpStartTime;
+
+			//HelpEndTime = time(NULL);
+			//elapseTime = HelpEndTime - HelpStartTime;
 		}
-		GlassesModeMutex.lock();
-		if(elapseTime >= 45 /*1min*/ && ( G_glassesMode==robotSearch/*||G_glassesMode==glassesControl*/) )
-		{
-				asking_for_help();
-		}
-		GlassesModeMutex.unlock();
+
+		//GlassesModeMutex.lock();
+		//if(elapseTime >= 45 /*1min*/ && ( G_glassesMode==ROBOT_SEARCH/*||G_glassesMode==GLASSES_CONTROL*/) )
+		//{
+		//		asking_for_help();
+		//}
+		//GlassesModeMutex.unlock();
 		
-  }
+  }//end of while(1)
 }
+
+
 
 
 //--------------Legacy---------------

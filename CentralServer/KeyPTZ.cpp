@@ -2,6 +2,7 @@
 #include "KeyPTZ.h"
 
 ArVCC4* G_PTZHandler;
+
 /*
 Commands:
 _________________
@@ -59,6 +60,7 @@ KeyPTU::KeyPTU(ArRobot *robot) :
   myExerciseTime.setToNow();
   myExercise = false;
   G_PTZHandler = &myPTU;
+	
   myPTU.enableIRFilterMode();
   myPTU.enableIRLEDs();
 	
@@ -152,7 +154,6 @@ KeyPTU::KeyPTU(ArRobot *robot) :
   myPosIncrement = 1;
   mySlewIncrement = 5;
   myZoomIncrement = 50;
-	myPTU.tiltRel(-3);
 
 }
 
@@ -247,7 +248,7 @@ void KeyPTU::z(void)
 void KeyPTU::r(void)
 {
   myPTU.reset();
-		ArUtil::sleep(200);
+		ArUtil::sleep(500);
 	G_PTZHandler->tiltRel(-10);
 }
 

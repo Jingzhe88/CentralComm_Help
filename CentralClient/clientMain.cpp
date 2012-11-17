@@ -58,7 +58,7 @@ ArMutex GlassesModeMutex;
 
 int main(int argc, char **argv)
 {
-	G_glassesMode=idle;
+	G_glassesMode=IDLE;
 	Aria::init();
 	client = new ArClientBase();
 	if (!client->blockingConnect(server_ip, 7272))
@@ -75,8 +75,8 @@ int main(int argc, char **argv)
 	client->addHandler("RobotTurnLeft", new ArGlobalFunctor1<ArNetPacket*>(&C_RobotTurnLeft));
 	client->addHandler("RobotTurnRight", new ArGlobalFunctor1<ArNetPacket*>(&C_RobotTurnRight));
 	client->addHandler("TargetApproach", new ArGlobalFunctor1<ArNetPacket*>(&C_TargetApproach));
-	client->addHandler("ZoomIn", new ArGlobalFunctor1<ArNetPacket*>(&C_ZoomIn));
-	//client->addHandler("TargetApproachObstacles", new ArGlobalFunctor1<ArNetPacket*>(&S_TargetApproach_Obstacles));
+	client->addHandler("Calibration", new ArGlobalFunctor1<ArNetPacket*>(&C_Calibration));
+	client->addHandler("TargetApproachObstacles", new ArGlobalFunctor1<ArNetPacket*>(&C_TargetApproach_Obstacles));
 	client->runAsync();
 
 	//for (int i=0;i<5;i++)

@@ -23,7 +23,7 @@ extern time_t HelpStartTime;
 ArMutex GlassesVideoMutex;
 
 int G_Target = 255; //from glassesVideo.cpp
-
+RobotSearch *G_robotsearch;
 
 
 
@@ -41,7 +41,7 @@ int G_Target = 255; //from glassesVideo.cpp
 //	}
 //	void* runThread(void*) 
 //	{
-//		//-------------------------object recoginition ------------------------
+//		//-------------------------object recognition ------------------------
 //
 //
 //		return 0;
@@ -83,6 +83,7 @@ void* GlassesVideo::runThread(void*)
 
 
 	RobotSearch robotsearch;
+	G_robotsearch = &robotsearch;
 	//robotsearch.create();
 	robotsearch.stopRunning();
 
@@ -93,7 +94,7 @@ void* GlassesVideo::runThread(void*)
 	moveWindow("Video Live", 645, 0);
 	namedWindow("Glasses_result",CV_WINDOW_NORMAL);
 	moveWindow("Glasses_result",1000,600);
-	//G_glassesMode = glassesOR;
+	//G_glassesMode = GLASSES_OR;
 	while(1)
 	{
 
@@ -110,11 +111,8 @@ void* GlassesVideo::runThread(void*)
 		modeSwitch(preMat, curMat);
 		//-------------------------------------------------------------------
 
-		if(G_glassesMode == glassesOR) //OR MODE
+		if(G_glassesMode == GLASSES_OR) //OR MODE
 		{
-
-			//Open Glasses Objct Recognition
-			//glOR.runAsync();
 
 			gl_result=255;
 			gl_result = gl_or.find(gl_img_bk, 'G');
@@ -139,7 +137,6 @@ void* GlassesVideo::runThread(void*)
 			//	else gl_result=255;*/
 
 			//}
-			//else gl_result=255;
 
 			if(gl_result !=255)
 			{
@@ -152,16 +149,15 @@ void* GlassesVideo::runThread(void*)
 				imshow("Glasses_result", glres_image);
 				waitKey(1);
 				
-				//--------------------glasses goes to roobt search mode------------------
+				//--------------------glasses goes to robot search mode------------------
 				GlassesModeMutex.lock();
 				CB.clear();
-				G_glassesMode = robotSearch;
+				G_glassesMode = ROBOT_SEARCH;
 				G_Search_Step = 0;
 				isDoneRobot = true;
 				G_Target= gl_result/5;
 				gl_result = 255;
-				HelpStartTime = time(NULL);
-				//RobotCommand(CameraMotion); //cameraMotion
+				//HelpStartTime = time(NULL);
 				GlassesModeMutex.unlock();
 
 				////-------------------------Open robot search thread ------------------------
