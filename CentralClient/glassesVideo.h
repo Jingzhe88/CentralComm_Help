@@ -3,7 +3,8 @@
 
 #include "opencv2/opencv.hpp"
 #include "opencv2/highgui/highgui.hpp"
-
+#include "ObjectRecognition.h"
+#include "RobotVideoReceiver.h"
 #include "Aria.h"
 using namespace cv;
 using namespace std;
@@ -14,7 +15,20 @@ enum RSGLASSESMODE{nod=1, shake, others};
 // void *glassesVideo(void*); 
 class GlassesVideo : public ArASyncTask
 {
+public:
+	GlassesVideo():gl_capture(3), gl_or("g20111105_4.yml.gz")
+	{
+	};
+	~GlassesVideo()
+	{
+		glassesVideo.release();
+		gl_capture.release();
+	};
   void* runThread(void*) ;
+private:
+	VideoWriter glassesVideo;
+	VideoCapture gl_capture; 
+	ObjectRecognition gl_or;
 };
 
 #endif

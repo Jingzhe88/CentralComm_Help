@@ -36,6 +36,7 @@ using namespace cv;
 class ObjectRecognition
 {
 public:
+	ObjectRecognition(){};
   ObjectRecognition(char *dbname);
   ObjectRecognition(VideoCapture& _capture, int _ret_num, char *dbname);
   ObjectRecognition(Mat _mat, int _ret_num, char *dbname);

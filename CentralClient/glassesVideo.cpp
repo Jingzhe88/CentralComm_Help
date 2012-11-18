@@ -17,7 +17,7 @@ extern ArMutex GlassesModeMutex;							//from clientMain.cpp
 extern GLASSESMODE G_glassesMode;//1 idle, 2 OR, 3 control, 4 Cancel
 extern int G_Search_Step;
 extern bool isDoneRobot;
-//extern ArTime helpTimer;
+
 
 extern time_t HelpStartTime;
 ArMutex GlassesVideoMutex;
@@ -27,38 +27,8 @@ RobotSearch *G_robotsearch;
 
 
 
-//class glassesOR : public ArASyncTask
-//{
-//	ObjectRecognition gl_or;
-//	Mat gl_img_bk, *gl_img;
-//	Mat glres_image; //display result image
-//	stringstream ret_src1; //var for src of result
-//	int gl_result;
-//public:
-//	glassesOR(Mat *_gl_img)
-//	{
-//		//gl_img = _gl_img;
-//	}
-//	void* runThread(void*) 
-//	{
-//		//-------------------------object recognition ------------------------
-//
-//
-//		return 0;
-//	}
-//
-//	//void stopRunning(void)
-//	//{
-//	//	destroyWindow("Grey Image");
-//	//}
-//
-//};
-
-
 void* GlassesVideo::runThread(void*) 
 {
-
-	VideoCapture gl_capture(3); 
 
 	gl_capture.set(CV_CAP_PROP_FRAME_WIDTH , 640);
 	gl_capture.set(CV_CAP_PROP_FRAME_HEIGHT, 480);
@@ -72,19 +42,15 @@ void* GlassesVideo::runThread(void*)
 
 	Mat curMat, preMat;
 
-	//glassesOR glOR(&gl_img_OR);
-	//glOR.stopRunning();
-	ObjectRecognition gl_or("g20111105_4.yml.gz");
+	
 	Mat gl_img_bk;
 	Mat glres_image;				//display result image
 
 	int gl_result=255;
 
 
-
 	RobotSearch robotsearch;
 	G_robotsearch = &robotsearch;
-	//robotsearch.create();
 	robotsearch.stopRunning();
 
 	
@@ -95,18 +61,32 @@ void* GlassesVideo::runThread(void*)
 	namedWindow("Glasses_result",CV_WINDOW_NORMAL);
 	moveWindow("Glasses_result",1000,600);
 	//G_glassesMode = GLASSES_OR;
+	Size S = Size((int) gl_capture.get(CV_CAP_PROP_FRAME_WIDTH),    //Acquire input size
+		(int) gl_capture.get(CV_CAP_PROP_FRAME_HEIGHT));
+	glassesVideo.open("glasses.avi"  , CV_FOURCC('M','J','P','G') /* CV_FOURCC('P','I','M','1') */, 20/*inputVideo.get(CV_CAP_PROP_FPS)*/,S, true);
+
+	if (!glassesVideo.isOpened())
+	{
+		cout  << "Could not open the output video for write: " /*<< source*/ << endl;
+	}
+
 	while(1)
 	{
 
 		gl_capture >> gl_img;
+		//if(!gl_img.empty())
+		glassesVideo<< gl_img;
 		cvtColor(gl_img,gl_img_bk,CV_RGB2GRAY);
-		imshow("Video Live",gl_img_bk);
+		
+		imshow("Video Live",gl_img);
+		
 		waitKey(1);
 
 		//----------------------------glasses Motion ------------------------
 		preMat = gl_img.clone();
 		//imshow("preMat", preMat);
 		gl_capture >> curMat;
+		glassesVideo<< curMat;
 		//imshow ("cur", curMat);
 		modeSwitch(preMat, curMat);
 		//-------------------------------------------------------------------
@@ -116,6 +96,7 @@ void* GlassesVideo::runThread(void*)
 
 			gl_result=255;
 			gl_result = gl_or.find(gl_img_bk, 'G');
+
 
 			//if(gl_result !=255)
 			//{
@@ -157,10 +138,9 @@ void* GlassesVideo::runThread(void*)
 				isDoneRobot = true;
 				G_Target= gl_result/5;
 				gl_result = 255;
-				//HelpStartTime = time(NULL);
 				GlassesModeMutex.unlock();
 
-				////-------------------------Open robot search thread ------------------------
+				//-------------------------Open robot search thread ------------------------
 
 				if(!robotsearch.getRunning())
 					robotsearch.runAsync();

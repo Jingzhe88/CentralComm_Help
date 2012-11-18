@@ -36,22 +36,7 @@ GLASSESMODE G_glassesMode;
 ArMutex GlassesModeMutex;
 //--------------------------------------------------------------------------------------------
 
-/**
-* This function provides a way to exit nicely from the system
-*/
-//void quit(char* msg, int retval)
-//{
-//	if (retval == 0) {
-//		fprintf(stdout, (msg == NULL ? "" : msg));
-//		fprintf(stdout, "\n");
-//	} else {
-//		fprintf(stderr, (msg == NULL ? "" : msg));
-//		fprintf(stderr, "\n");
-//	}
-//
-//	exit(retval);
-//}
-
+extern VideoWriter robotVideo;
 
 
 //------------------------------------------------------------------------------------------------
@@ -93,9 +78,13 @@ int main(int argc, char **argv)
 	glassesVideo.runAsync();
 	//-----------------------------------------------------------------------------------
 
-	while(1);
+	while(1)
+	{
+		if(getchar()=='x') break;
+	}
 
-	Aria::shutdown();
+
+	//Aria::shutdown();
 	return -1;
 
 }

@@ -32,8 +32,14 @@ extern char* server_ip;
 class RobotVideo : public ArASyncTask
 {
 public:
-
+	~RobotVideo()
+	{
+		robotVideo.release();
+	};
   void* runThread(void*) ;
+private:
+	VideoWriter robotVideo;
+
 };
 
 
