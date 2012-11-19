@@ -21,8 +21,9 @@ public:
 	};
 	~GlassesVideo()
 	{
-		glassesVideo.release();
 		gl_capture.release();
+		glassesVideo.release();
+		
 	};
   void* runThread(void*) ;
 private:

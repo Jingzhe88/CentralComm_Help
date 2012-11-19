@@ -482,7 +482,7 @@ int main(int argc, char **argv)
   videoserver.runAsync();
 
 	
-	//G_PathPlanning->pathPlanToPose(ArPose(0, 0 , -32),true,true);
+	//G_PathPlanning->pathPlanToPose(ArPose(1500, -1500 , -32),true,true);
 	//while(G_PathPlanning->getState() != ArPathPlanningTask::REACHED_GOAL );
 
 	//S_TargetApproach_Obstacles1();

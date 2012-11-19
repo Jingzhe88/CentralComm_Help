@@ -83,7 +83,7 @@ int main(int argc, char **argv)
 		if(getchar()=='x') break;
 	}
 
-
+	glassesVideo.cancel();
 	//Aria::shutdown();
 	return -1;
 
