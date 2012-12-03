@@ -46,6 +46,7 @@ local.properties
 [Rr]elease/
 *_i.c
 *_p.c
+*.avi
 *.ilk
 *.meta
 *.obj

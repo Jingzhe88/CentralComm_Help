@@ -137,6 +137,9 @@ void S_CameraMotion( ArServerClient *serverclient, ArNetPacket *socket)
 void S_RobotTurnLeft( ArServerClient *serverclient, ArNetPacket *socket)
 {
 	cout << "turn left" <<endl;
+	G_PTZHandler->reset();
+	ArUtil::sleep(300);
+	G_PTZHandler->tiltRel(-10);
 	basic_turn(ANGAL_FOR_TURN);
 	serverclient->sendPacketTcp(socket);
 }
@@ -145,6 +148,9 @@ void S_RobotTurnLeft( ArServerClient *serverclient, ArNetPacket *socket)
 void S_RobotTurnRight( ArServerClient *serverclient, ArNetPacket *socket)
 {
 	cout << "turn right" <<endl;
+	G_PTZHandler->reset();
+	ArUtil::sleep(300);
+	G_PTZHandler->tiltRel(-10);
 	basic_turn(-ANGAL_FOR_TURN);
 	serverclient->sendPacketTcp(socket);
 }
@@ -257,22 +263,59 @@ RECALCULATE:
 	G_PTZHandler->reset();
 	ArUtil::sleep(300);
 	G_PTZHandler->tiltRel(-10);
-	while(G_PathPlanning->getState() != ArPathPlanningTask::REACHED_GOAL )
-	{
-		if (G_PathPlanning->getState() == ArPathPlanningTask::FAILED_MOVE)
+		while(1)
 		{
-			G_PathPlanning->cancelPathPlan();cout <<  "x " << robot.getPose().getX()<< " y " <<robot.getPose().getY() <<endl; break;
-		}
-		else if(G_PathPlanning->getState() == ArPathPlanningTask::FAILED_PLAN)
-		{
+			if (G_PathPlanning->getState() == ArPathPlanningTask::MOVING_TO_GOAL || G_PathPlanning->getState() == 1 || G_PathPlanning->getState() == 2)
+				continue;
+			else
+			if(G_PathPlanning->getState() == ArPathPlanningTask::REACHED_GOAL )
+			{
+				break;
+			}else //Failed Handler
+			{
+				/*if (G_PathPlanning->getState() == ArPathPlanningTask::FAILED_MOVE)
+				{
+					cout << "FAILED_MOVE"<<endl;
+					G_PathPlanning->cancelPathPlan(); 
+					break;
+				}*/
+				if(G_PathPlanning->getState() == ArPathPlanningTask::FAILED_PLAN)
+				{
+					cout << "FAILED_PLAN"<<endl;
+					if (distance>200)
+					{
+						distance -= 100;
+						goto RECALCULATE;
+					}
+					else break;
+				}
+				/*
+				else if(G_PathPlanning->getLocalPathState() == ArPathPlanningTask::OBSTACLE_TOO_CLOSE )
+				{
+					cout << "OBSTACLE_TOO_CLOSE"<<endl;
+					G_PathPlanning->cancelPathPlan();
+					break;
+				}
 
+				else*/ if(G_PathPlanning->getLocalPathState() == ArPathPlanningTask::NO_LOCAL_PLAN  )
+				{
+					cout << "NO_LOCAL_PLAN"<<endl;
+					if (distance>200)
+					{
+						distance -= 100;
+						goto RECALCULATE;
+					}
+					else break;
+				}
+				else 
+				{
+					cout << "G_PathPlanning->getState() is " << G_PathPlanning->getState()<<endl;
+					cout << "I have no idea what failure is... "<<endl;
+					G_PathPlanning->cancelPathPlan();
+					break;
+				}
+			}
 		}
-		if(G_PathPlanning->getLocalPathState() == ArPathPlanningTask::OBSTACLE_TOO_CLOSE )
-		{
-			G_PathPlanning->pathPlanToPose(ArPose(targetX,targetY,camAngle),true,true);
-		}
-	}
-
 	//serverclient->sendPacketTcp(socket);
 
 	ArUtil::sleep(2000);
@@ -281,27 +324,51 @@ RECALCULATE:
 	cout << "RobotMotion is heading home..." <<endl;
 	G_PathPlanning->pathPlanToPose(ArPose(0,0,0),true,true);
 
-	while(G_PathPlanning->getState() != ArPathPlanningTask::REACHED_GOAL )
-	{
-		if (G_PathPlanning->getState() == ArPathPlanningTask::FAILED_MOVE)
+		while(1)
 		{
-			G_PathPlanning->cancelPathPlan(); break;
-		}
+			if (G_PathPlanning->getState() == ArPathPlanningTask::MOVING_TO_GOAL || G_PathPlanning->getState() == 1 || G_PathPlanning->getState() == 2)
+				continue;
+			else
+			if(G_PathPlanning->getState() == ArPathPlanningTask::REACHED_GOAL )
+			{
+				break;
+			}else //Failed Handler
+			{
+				/*if (G_PathPlanning->getState() == ArPathPlanningTask::FAILED_MOVE)
+				{
+					cout << "FAILED_MOVE"<<endl;
+					G_PathPlanning->cancelPathPlan(); 
+					break;
+				}*/
+				if(G_PathPlanning->getState() == ArPathPlanningTask::FAILED_PLAN)
+				{
+					cout << "FAILED_PLAN"<<endl;
 
+					 break;
+				}
+				/*
+				else if(G_PathPlanning->getLocalPathState() == ArPathPlanningTask::OBSTACLE_TOO_CLOSE )
+				{
+					cout << "OBSTACLE_TOO_CLOSE"<<endl;
+					G_PathPlanning->cancelPathPlan();
+					break;
+				}
 
-		if(G_PathPlanning->getState() == ArPathPlanningTask::FAILED_PLAN)
-		{G_PathPlanning->cancelPathPlan();}
+				else*/ if(G_PathPlanning->getLocalPathState() == ArPathPlanningTask::NO_LOCAL_PLAN  )
+				{
+					cout << "NO_LOCAL_PLAN"<<endl;
 
-		if(G_PathPlanning->getLocalPathState() == ArPathPlanningTask::OBSTACLE_TOO_CLOSE )
-		{
-			G_PathPlanning->pathPlanToPose(ArPose(0,0,0),true,true);
+					break;
+				}
+				else 
+				{
+					cout << "G_PathPlanning->getState() is " << G_PathPlanning->getState()<<endl;
+					cout << "I have no idea what failure is... "<<endl;
+					G_PathPlanning->cancelPathPlan();
+					break;
+				}
+			}
 		}
-		if(G_PathPlanning->getLocalPathState() == ArPathPlanningTask::NO_LOCAL_PLAN  )
-		{
-			distance -= 100;
-			goto RECALCULATE;
-		}
-	}
 	serverclient->sendPacketTcp(socket);
 }
 
@@ -331,6 +398,7 @@ double getAngle(double targetX, double targetY, double originalX, double origina
 			return -1*atan((targetY - originalY)/(targetX - originalX))-90;
 	}
 }
+
 
 #define DISTANCE_VALVE 1000
 #define EXTRA_DISTANCE 500
@@ -365,7 +433,7 @@ void S_TargetApproach_Obstacles( ArServerClient *serverclient, ArNetPacket *sock
 
 	G_PathPlanning->pathPlanToPose(targetPose,true,true);	
 	double tempDistance;
-	ArUtil::sleep(500);
+	ArUtil::sleep(1000);
 	while(G_PathPlanning->getState() != ArPathPlanningTask::REACHED_GOAL )
 	{
 		//std::list<ArPose> path = G_PathPlanning->getPathFromTo(robot.getPose(), targetPose);

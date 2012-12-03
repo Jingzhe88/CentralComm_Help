@@ -257,7 +257,7 @@ void getPatternsWithInputImage(Mat preFrame, Mat curFrame, int& pattern){
 						cumulatedY += abs(temp[i].second);
 					}
 					cout << cumulatedY << " " << cumulatedX << endl;
-					if(cumulatedY > 4 || cumulatedX > 10 || cumulatedX < -10)
+					if(cumulatedY > 3 || (cumulatedX < 6 && cumulatedX > -6))
 						RS_glassesMode = others;
 					else
 						RS_glassesMode = shake;
