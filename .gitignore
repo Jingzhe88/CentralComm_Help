@@ -47,6 +47,10 @@ local.properties
 *_i.c
 *_p.c
 *.avi
+<<<<<<< HEAD
+=======
+*.dll
+>>>>>>> 1
 *.ilk
 *.meta
 *.obj

@@ -43,7 +43,7 @@ ArPathPlanningTask* G_PathPlanning;
 ArRobot robot;
 ArSick sick;
 // ArAnalogGyro *G_gyro;
-extern ArVCC4* G_PTZHandler;
+
 //-------------------------video stream feedback-----------------------------------------
 
 
@@ -447,18 +447,10 @@ int main(int argc, char **argv)
  * *****************************************************/
 
   
-  robot.comInt(ArCommands::SOUNDTOG, 0);
-//   KeyPTU ptz(&robot); 		//create keyboard for control vcc50i
-  //FaceDetect fd(&robot, &ptz, &pathTask);		//init facedetect instant
-  //fd.runAsync();		//run facedetect thread
- 
-  /* Finally, get ready to run the robot: */
-
-  
   robot.unlock();
     // Localize robot at home.
   locTask.localizeRobotAtHomeBlocking();
-//  ArUtil::sleep (300);
+  ArUtil::sleep (300);
   locTask.forceUpdatePose(ArPose(0,0,0));
   //G_PathPlanning->pathPlanToPose(ArPose(220,20,0),true,true);
 
@@ -468,11 +460,11 @@ int main(int argc, char **argv)
   
   
   KeyPTU ptz(&robot); 		//create keyboard for control vcc50i
-	G_PTZHandler->reset();
-	ArUtil::sleep(300);
-	G_PTZHandler->tiltRel(-10);
-	G_PTZHandler->panSlew(20);
-	ArUtil::sleep(300);
+
+
+	G_PTZHandler->panSlew(30);
+	resetMotion();
+
 // robot.enableMotors();
 // robot.runAsync(true);
   //locTask.localizeRobotAtHomeBlocking();
@@ -481,6 +473,7 @@ int main(int argc, char **argv)
   VideoServerBase videoserver;
   videoserver.runAsync();
 
+	robot.comInt(ArCommands::SOUNDTOG, 0);
 	
 	//G_PathPlanning->pathPlanToPose(ArPose(1500, -1500 , -32),true,true);
 	//while(G_PathPlanning->getState() != ArPathPlanningTask::REACHED_GOAL );
@@ -488,9 +481,8 @@ int main(int argc, char **argv)
 	//S_TargetApproach_Obstacles1();
 
 	//ArUtil::sleep(5000);
-	////cout << "zoom in" <<endl;
-	////G_PTZHandler->zoom(G_PTZHandler->getZoom() + 10);
-	////ArUtil::sleep(3000);
+
+
  //   G_PTZHandler->panRel(60);
 	//	ArUtil::sleep(3000);
 	//while(1)

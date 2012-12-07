@@ -16,12 +16,24 @@ extern ArVCC4* G_PTZHandler;		//from KeyPtz.cpp
 int goals[8] = {-800,2200,  -200,2000,  600,600,  0,-450};
 int headings[4] = {0,90,180,0};
 
-int findNeighbor(int *goals);
 int goalIndex = 0;
 int headingIndex = 0;
 int CameraMoveCount = 0;
 void CoordinateCalculation(const double robotCurrentX, const double robotCurrentY, double* targetX, double* targetY, const double camAngle, const double robotHeading, const double movDistance);
 void coordinateCalculation(double robotCurrentX,double robotCurrentY,double *outputX,double *outputY,double camAngle, double robotHeading,double moveDistance);
+
+
+void resetMotion()
+{
+	CameraMoveCount=0;
+	headingIndex=0;
+	goalIndex=0;
+	G_PTZHandler->getRealPanTilt();
+	G_PTZHandler->reset();
+	ArUtil::sleep(500);
+	G_PTZHandler->tiltRel(-10);
+}
+
 void basic_turn(int turnAngal)
 {
 	// ArTime start;
@@ -78,25 +90,20 @@ void S_GlassesCancel( ArServerClient *serverclient, ArNetPacket *socket)
 	targetDistance = 0;
 	G_PTZHandler->reset();
 	ArUtil::sleep(500);
-	//G_PTZHandler->zoom(G_PTZHandler->getZoom() + 250);
 	G_PTZHandler->tiltRel(-10);
 	serverclient->sendPacketTcp(socket);
 }
 
 void S_Calibration( ArServerClient *serverclient, ArNetPacket *socket)
 {
-	//G_PTZHandler->zoom(G_PTZHandler->getZoom() + 1300);
-	//ArUtil::sleep(8000);
 	int cameraAdjustingAngle = socket->bufToDouble();
 	cout << "Adjust camera angle ... " << " " <<
 		cameraAdjustingAngle << endl;
 
 	G_PTZHandler-> panRel(cameraAdjustingAngle);
-	ArUtil::sleep(4000);
+	ArUtil::sleep(1000);
 	serverclient->sendPacketTcp(socket);
 }
-
-
 
 
 
@@ -200,7 +207,7 @@ void S_RobotMotion( ArServerClient *serverclient, ArNetPacket *socket)
 void S_TargetApproach( ArServerClient *serverclient, ArNetPacket *socket)
 {
 	cout << "The last step: TargetApproach!" <<endl;
-
+	CameraMoveCount = 0;
 	//G_PathPlanning->setCollisionRange(1000);
 	//G_PathPlanning->setFrontClearance(40);
 	//G_PathPlanning->setGoalDistanceTolerance(2500);
@@ -369,6 +376,7 @@ RECALCULATE:
 				}
 			}
 		}
+	
 	serverclient->sendPacketTcp(socket);
 }
 
@@ -457,11 +465,6 @@ void S_TargetApproach_Obstacles( ArServerClient *serverclient, ArNetPacket *sock
 				MidPose.setY(tempY);
 				MidPose.setTh(myIterator->getTh());
 
-				//double midAngle = getAngle(tempX, tempY, OriginalPose.getX(), OriginalPose.getY());
-				//if(midAngle > OriginalPose.getTh())
-				//	MidPose.setTh(OriginalPose.getTh() + 90);
-				//else
-				//	MidPose.setTh(OriginalPose.getTh() - 90);
 				G_PathPlanning->cancelPathPlan();
 				goto breakPathPlanning;
 			}

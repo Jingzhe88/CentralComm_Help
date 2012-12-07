@@ -13,6 +13,8 @@
 #include <iostream>
 #include <stdio.h>
 
+extern ArVCC4* G_PTZHandler;
+
 class KeyPTU
 {
 public:

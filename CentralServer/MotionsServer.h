@@ -9,9 +9,9 @@
 #include <cmath>
 #include <iostream>
 using namespace std;
-// using namespace cv;
 
 
+void resetMotion();
 void turn_func( ArServerClient *serverclient, ArNetPacket *socket);
 void S_RobotMotion( ArServerClient *serverclient, ArNetPacket *socket);
 void S_CameraMotion( ArServerClient *serverclient, ArNetPacket *socket);
