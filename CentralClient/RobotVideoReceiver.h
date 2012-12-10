@@ -1,6 +1,5 @@
-
 #ifndef ROBOTVIDEORECEIVER_H_H
-#define ROBOTVIDEORECEIVER_H_H 1
+#define ROBOTVIDEORECEIVER_H_H 
 
 
 
@@ -10,24 +9,20 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/nonfree/nonfree.hpp>
 #include <opencv2/nonfree/features2d.hpp>
-// #include <boost/concept_check.hpp>
-//#include <pthread.h>
 
-//#include <sys/socket.h>
-//#include <netinet/in.h>
-//#include <arpa/inet.h>
-#include <stdio.h>
-#include <stdlib.h>
-//#include <unistd.h>
 #include <iostream>
 
 #include <Aria.h>
-
+#include "ArNetworking.h"
 using namespace std;
 using namespace cv;
 
 
 extern char* server_ip;
+extern ArClientBase *client;
+extern Mat robot_img;
+
+void C_RobotVideoCB(ArNetPacket* robVideoPack);
 
 class RobotVideo : public ArASyncTask
 {

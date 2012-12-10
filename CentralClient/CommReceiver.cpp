@@ -7,7 +7,7 @@
 #include "RobotVideoReceiver.h"
 #include "glassesVideo.h"
 #include "GlassesMotion\CircularBuffer.h"
-
+#define NO_EXPMT 0
 
 // Including SDKDDKVer.h defines the highest available Windows platform.
 
@@ -37,12 +37,12 @@ extern Mat robot_img;
 extern int G_Target;
 extern ArClientBase *client;
 
-extern int G_Search_Step;
+int G_Search_Step;
 bool isDoneRobot =false;
 extern GLASSESMODE G_glassesMode;
 extern ArMutex GlassesModeMutex;
-time_t HelpStartTime, HelpEndTime, elapseTime;
-
+//time_t HelpStartTime, HelpEndTime, elapseTime;
+ArTime expmtTimer;
 int robotCameraAngle = 0;
 
 /**
@@ -147,7 +147,7 @@ void asking_for_help()
 }
 
 
-void RobotCommand(int robotMoveComm )
+void RobotCommand(int robotMoveComm, int cameraAngle )
 {
 	ArNetPacket pack;
 	/*robotMoveComm = 255;*/
@@ -196,6 +196,7 @@ void RobotCommand(int robotMoveComm )
 			client->requestOnce("Calibration", &pack);
 			cout << "Calibration is sent out!" << endl; 
 			break;
+
 		case 7:
 			robotSpeak(255, "cancel");
 			client->requestOnce("GlassesCancel");
@@ -207,6 +208,11 @@ void RobotCommand(int robotMoveComm )
 			robotSpeak(0,"tagetApproach");
 			client->requestOnce("TargetApproachObstacles");
 			cout << "TargetApproachObstacles has been sent out!" << endl;
+			break;
+		case 9: 
+			pack.doubleToBuf(robotCameraAngle);
+			client->requestOnce("Calibration", &pack);
+			cout << "Calibration is sent out!" << endl; 
 			break;
 		case 255: //for testing
 			cout << "You are calling the Legacy function!" <<endl;
@@ -259,6 +265,7 @@ void C_CameraMotion(ArNetPacket * pack)
 
 void C_TargetApproach(ArNetPacket * pack)  //finish target approach
 {
+	cout << "Total Time for finding the object: " << expmtTimer.mSecSinceLL()<<endl;
 	cout << "Final step completed: Arrive the object!!!" << endl; 
 	robotSpeak(0,"complete");
 	GlassesModeMutex.lock();
@@ -267,6 +274,7 @@ void C_TargetApproach(ArNetPacket * pack)  //finish target approach
 	G_Search_Step = 0;
 	isDoneRobot = true;
 	GlassesModeMutex.unlock();
+	
 }
 
 
@@ -291,6 +299,7 @@ RobotSearch::RobotSearch():robotOR("r20121111_4.yml.gz")
 
 void RobotSearch::moveRobotCamera()
 {
+#if NO_EXPMT
 	if(G_Search_Step<=13)
 	{
 		//the object is detected, enter the search mode. callback: S_RobotMotion
@@ -299,10 +308,15 @@ void RobotSearch::moveRobotCamera()
 	}
 	if(G_Search_Step>13)
 	{
+
 		asking_for_help();
 		G_Search_Step = 0;
 		//isDoneRobot = false;
 	}
+#else
+	expmtTimer.setToNow();
+	asking_for_help();
+#endif
 }
 
 void RobotSearch::resetRobotCameraParam()
@@ -345,8 +359,8 @@ void* RobotSearch::runThread(void*)
 		{
 			if(OR())
 			{
-				G_glassesMode = TARGET_APPROACH;
 				RobotCommand(Calibrate);
+				G_glassesMode = TARGET_APPROACH;
 			}
 			else if(isDoneRobot)
 			{

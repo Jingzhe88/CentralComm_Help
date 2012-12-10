@@ -25,7 +25,10 @@ using namespace std;
 using namespace cv;
 enum { RobotMotion=1, CameraMotion, RobotTurnLeft, RobotTurnRight, CTargetApproach, Calibrate, Cancel, CTargetApproachObstacles };
 
-void RobotCommand(int robotMoveComm);
+extern int G_Search_Step;
+
+
+void RobotCommand(int robotMoveComm,  int cameraAngl=0);
 // void RobotMotion(ArClientBase client);
 //void CommReceiver(ArNetPacket * pack);
 void C_RobotMotion(ArNetPacket * pack);

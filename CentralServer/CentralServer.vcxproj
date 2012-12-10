@@ -11,14 +11,14 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="KeyPTZ.cpp" />
     <ClCompile Include="MotionsServer.cpp" />
     <ClCompile Include="serverMain.cpp" />
+    <ClCompile Include="VCCHandler.cpp" />
     <ClCompile Include="VideoServer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="KeyPTZ.h" />
     <ClInclude Include="MotionsServer.h" />
+    <ClInclude Include="VCCHandler.h" />
     <ClInclude Include="VideoServer.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

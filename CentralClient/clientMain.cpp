@@ -43,7 +43,8 @@ extern VideoWriter robotVideo;
 
 int main(int argc, char **argv)
 {
-	G_glassesMode=IDLE;
+	G_Search_Step=0;
+	G_glassesMode = GLASSES_OR;//IDLE;
 	Aria::init();
 	client = new ArClientBase();
 	if (!client->blockingConnect(server_ip, 7272))
@@ -55,17 +56,20 @@ int main(int argc, char **argv)
 	//------------------Define Callback Handlers-----------------------
 
 	//client->addHandler("turn", new ArGlobalFunctor1<ArNetPacket*>(&CommReceiver));
-	client->addHandler("RobotMotion", new ArGlobalFunctor1<ArNetPacket*>(&C_RobotMotion));
-	client->addHandler("CameraMotion", new ArGlobalFunctor1<ArNetPacket*>(&C_CameraMotion));
-	client->addHandler("RobotTurnLeft", new ArGlobalFunctor1<ArNetPacket*>(&C_RobotTurnLeft));
+	client->addHandler("RobotVideo",     new ArGlobalFunctor1<ArNetPacket*>(&C_RobotVideoCB));
+	client->addHandler("RobotMotion",    new ArGlobalFunctor1<ArNetPacket*>(&C_RobotMotion));
+	client->addHandler("CameraMotion",   new ArGlobalFunctor1<ArNetPacket*>(&C_CameraMotion));
+	client->addHandler("RobotTurnLeft",  new ArGlobalFunctor1<ArNetPacket*>(&C_RobotTurnLeft));
 	client->addHandler("RobotTurnRight", new ArGlobalFunctor1<ArNetPacket*>(&C_RobotTurnRight));
 	client->addHandler("TargetApproach", new ArGlobalFunctor1<ArNetPacket*>(&C_TargetApproach));
-	client->addHandler("Calibration", new ArGlobalFunctor1<ArNetPacket*>(&C_Calibration));
+	client->addHandler("Calibration",		 new ArGlobalFunctor1<ArNetPacket*>(&C_Calibration));
 	client->addHandler("TargetApproachObstacles", new ArGlobalFunctor1<ArNetPacket*>(&C_TargetApproach_Obstacles));
 	client->runAsync();
+	
 
-	//for (int i=0;i<5;i++)
-	//RobotCommand(6);
+
+	//client->request("RobotVideo",50);
+	//client->requestOnce("RobotVideo");
 	//-----------------------------Open robot video thread-------------------------------
 	RobotVideo rotvideo;
 
@@ -80,10 +84,13 @@ int main(int argc, char **argv)
 
 	while(1)
 	{
-		if(getchar()=='x') break;
+		
+		if(getchar()=='x') 
+			break;
 	}
 
-	glassesVideo.cancel();
+	//glassesVideo.cancel();
+
 	//Aria::shutdown();
 	return -1;
 

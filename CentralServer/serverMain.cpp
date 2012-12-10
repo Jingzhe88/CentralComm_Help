@@ -1,22 +1,15 @@
 #include "Aria.h"
 #include "ArNetworking.h"
-// #include "ariaTypedefs.h"
-// #include "ariaUtil.h"
-// #include "ArSoundsQueue.h"
-// #include "ArSoundPlayer.h"
 #include "Arnl.h"
 #include "ArLocalizationTask.h"
 
 
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/features2d/features2d.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
+//#include "opencv2/highgui/highgui.hpp"
+//#include "opencv2/features2d/features2d.hpp"
+//#include "opencv2/imgproc/imgproc.hpp"
 
 
-//#include "ArVCC4.h"
-
-
-#include "KeyPTZ.h"
+#include "VCCHandler.h"
 #include "VideoServer.h"
 #include "MotionsServer.h"
 
@@ -57,18 +50,14 @@ int main(int argc, char **argv)
   ArServerBase server;
 	
 //-----------------------------------------------------------------------------------
+	VCCHandler ptz(&robot); 		//create keyboard for control vcc50i
 
-
+	
+	G_PTZHandler->reset();
+	ArUtil::sleep(300);
+	G_PTZHandler->panSlew(30);
 //-----------------------------------------------------------------------------------
-    // Initialize location of Aria, Arnl and their args.
-//   Aria::init();
 
-  
-  // The robot object
-
-
-  // Our server
-//   ArServerBase server;
   argc = 2 ;
 
   argv[0] = "-map";
@@ -204,7 +193,7 @@ int main(int argc, char **argv)
   robot.runAsync(true);
   
   // Start the laser thread.
-   sick.runAsync();
+  sick.runAsync();
 
   // Try to connect the laser
   if (!sick.blockingConnect())
@@ -266,7 +255,7 @@ int main(int argc, char **argv)
 
   // Misc. simple commands:
   ArServerHandlerCommands commands(&server);
-
+	
 
   // These provide various kinds of information to the client:
   ArServerInfoRobot serverInfoRobot(&server, &robot);
@@ -277,9 +266,9 @@ int main(int argc, char **argv)
 //-------------------------receive commands or events from client---------------------
   
 //   ArServerHandlerCommands commands(&server);
-
-	server.addData("turn","", new ArGlobalFunctor2<ArServerClient *, ArNetPacket*>(&turn_func) ,"","");
-	server.addData("RobotMotion"	   ,"", new ArGlobalFunctor2<ArServerClient *, ArNetPacket*>(&S_RobotMotion) ,"","");
+	server.addData("RobotVideo"			,"", new ArGlobalFunctor2<ArServerClient *, ArNetPacket*>(&VideoServerBase::RobotVideoCB) ,"","");
+	server.addData("turn"						,"", new ArGlobalFunctor2<ArServerClient *, ArNetPacket*>(&turn_func) ,"","");
+	server.addData("RobotMotion"	  ,"", new ArGlobalFunctor2<ArServerClient *, ArNetPacket*>(&S_RobotMotion) ,"","");
 	server.addData("CameraMotion"   ,"", new ArGlobalFunctor2<ArServerClient *, ArNetPacket*>(&S_CameraMotion) ,"","");
 	server.addData("RobotTurnLeft"  ,"", new ArGlobalFunctor2<ArServerClient *, ArNetPacket*>(&S_RobotTurnLeft) ,"","");
 	server.addData("RobotTurnRight" ,"", new ArGlobalFunctor2<ArServerClient *, ArNetPacket*>(&S_RobotTurnRight) ,"","");
@@ -290,7 +279,8 @@ int main(int argc, char **argv)
 
 	server.addClientRemovedCallback(new ArGlobalFunctor1< ArServerClient * >(&clientCloseCallback));
 //-------------------------receive commands or events from client---------------------
-  
+
+
   
 //***********************  
   ArServerInfoLocalization serverInfoLocalization (&server, &robot, &locManager);
@@ -371,21 +361,7 @@ int main(int argc, char **argv)
 
 
 
-  /* File transfer services: */
-  
-#ifdef WIN32
-//   // these server file things don't work under windows yet
-//   ArLog::log(ArLog::Normal, "Note, file upload/download services are not implemented for Windows; not enabling them.");
-// #else
-//   // This block will allow you to set up where you get and put files
-//   // to/from, just comment them out if you don't want this to happen
-//   // /*
-//   ArServerFileLister fileLister(&server, fileDir);
-//   ArServerFileToClient fileToClient(&server, fileDir);
-//   ArServerFileFromClient fileFromClient(&server, fileDir, "/tmp");
-//   ArServerDeleteFileOnServer deleteFileOnServer(&server, fileDir);
-  // */
-#endif
+
 
   // Create the service that allows the client to monitor the communication 
   // between the robot and the client.
@@ -445,25 +421,18 @@ int main(int argc, char **argv)
  * 			Camera 
  * ****************************************************
  * *****************************************************/
-
+	
   
   robot.unlock();
     // Localize robot at home.
   locTask.localizeRobotAtHomeBlocking();
-  ArUtil::sleep (300);
+
   locTask.forceUpdatePose(ArPose(0,0,0));
-  //G_PathPlanning->pathPlanToPose(ArPose(220,20,0),true,true);
 
-  //modeGoto.tourGoals();
+  resetMotion();
   
-//   server.runAsync();	
-  
-  
-  KeyPTU ptz(&robot); 		//create keyboard for control vcc50i
 
-
-	G_PTZHandler->panSlew(30);
-	resetMotion();
+	
 
 // robot.enableMotors();
 // robot.runAsync(true);

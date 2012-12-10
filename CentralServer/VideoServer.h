@@ -19,7 +19,13 @@ void clientCloseCallback(ArServerClient * serverClient);
 
 class VideoServerBase : public ArASyncTask
 {
+
+
+	
+
   void* runThread(void*) ;
+public:
+	static void RobotVideoCB (ArServerClient *, ArNetPacket*);
 };
 
 #endif

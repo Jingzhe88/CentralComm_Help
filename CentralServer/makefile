@@ -22,7 +22,7 @@ LINKFLAGS += -Linclude -L/usr/local/Aria/lib -lAria -lpthread -ldl -lrt \
 
  #-lArNetworkingForArnl -lAriaForArnl -lpthread -ldl -lrt -Xlinker -Bstatic -lstdc++ -Xlinker -Bdynamic -lpthread -ldl -lrt 
 
-OBJECTS += KeyPTZ.o VideoServer.o MotionsServer.o
+OBJECTS += VCCHandler.o VideoServer.o MotionsServer.o
 
 RecogMove: $(OBJECTS)
 	$(CC) $(pre) $(CPPFLAGS) serverMain.cpp -o main  $(OBJECTS) $(LINKFLAGS)

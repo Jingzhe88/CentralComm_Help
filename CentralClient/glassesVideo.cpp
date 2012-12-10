@@ -15,7 +15,7 @@ extern CircularBuffer CB;
 // int GlassesMode;												//from clientMain.cpp			0:Idle, 1: OR, 2:Control
 extern ArMutex GlassesModeMutex;							//from clientMain.cpp
 extern GLASSESMODE G_glassesMode;//1 idle, 2 OR, 3 control, 4 Cancel
-extern int G_Search_Step;
+
 extern bool isDoneRobot;
 
 
@@ -119,6 +119,7 @@ void* GlassesVideo::runThread(void*)
 
 			//}
 
+			gl_result=4;
 			if(gl_result !=255)
 			{
 
